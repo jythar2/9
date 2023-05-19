@@ -1,72 +1,100 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>HTML Game</title>
+  <title>Pong</title>
   <style>
     canvas {
-      border: 1px solid black;
+      background: #000;
+      display: block;
+      margin: 20px auto;
     }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <canvas id="pong" width="800" height="400"></canvas>
+
   <script>
-    // Get the canvas element and its context
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+    const canvas = document.getElementById("pong");
+    const context = canvas.getContext("2d");
 
-    // Define player properties
-    let playerSize = 50;
-    let playerX = canvas.width / 2 - playerSize / 2;
-    let playerY = canvas.height - playerSize;
-    let playerSpeed = 5;
+    // Create the paddles
+    const paddleWidth = 10, paddleHeight = 100;
+    const player = { x: 0, y: canvas.height / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, color: "#00FF00", dy: 6 };
+    const computer = { x: canvas.width - paddleWidth, y: canvas.height / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, color: "#FF0000", dy: 4 };
 
-    // Define key states
-    let rightPressed = false;
-    let leftPressed = false;
+    // Create the ball
+    const ball = { x: canvas.width / 2, y: canvas.height / 2, radius: 10, speed: 4, dx: 4, dy: 4, color: "#FFFFFF" };
 
-    // Event listeners for key presses
-    document.addEventListener("keydown", keyDownHandler);
-    document.addEventListener("keyup", keyUpHandler);
+    // Draw a rectangle
+    function drawRect(x, y, width, height, color) {
+      context.fillStyle = color;
+      context.fillRect(x, y, width, height);
+    }
 
-    function keyDownHandler(event) {
-      if (event.key === "ArrowRight") {
-        rightPressed = true;
-      } else if (event.key === "ArrowLeft") {
-        leftPressed = true;
+    // Draw the net
+    function drawNet() {
+      for (let i = 0; i <= canvas.height; i += 15) {
+        drawRect(canvas.width / 2 - 1, i, 2, 10, "#FFFFFF");
       }
     }
 
-    function keyUpHandler(event) {
-      if (event.key === "ArrowRight") {
-        rightPressed = false;
-      } else if (event.key === "ArrowLeft") {
-        leftPressed = false;
-      }
+    // Draw the ball
+    function drawBall(x, y, radius, color) {
+      context.fillStyle = color;
+      context.beginPath();
+      context.arc(x, y, radius, 0, Math.PI * 2, false);
+      context.closePath();
+      context.fill();
     }
 
-    // Game loop
-    function draw() {
-      // Clear the canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Update the game objects
+    function update() {
+      // Move the paddles
+      player.y += player.dy;
+      computer.y += computer.dy;
 
-      // Move the player
-      if (rightPressed && playerX < canvas.width - playerSize) {
-        playerX += playerSpeed;
-      } else if (leftPressed && playerX > 0) {
-        playerX -= playerSpeed;
+      // Check collision with the walls
+      if (player.y < 0 || player.y + player.height > canvas.height) {
+        player.dy *= -1;
       }
 
-      // Draw the player
-      ctx.fillStyle = "red";
-      ctx.fillRect(playerX, playerY, playerSize, playerSize);
+      if (computer.y < 0 || computer.y + computer.height > canvas.height) {
+        computer.dy *= -1;
+      }
 
-      // Request the next frame
-      requestAnimationFrame(draw);
+      // Move the ball
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      // Check collision with the paddles
+      if (ball.y + ball.radius > player.y && ball.y - ball.radius < player.y + player.height && ball.dx < 0) {
+        ball.dx *= -1;
+      }
+
+      if (ball.y + ball.radius > computer.y && ball.y - ball.radius < computer.y + computer.height && ball.dx > 0) {
+        ball.dx *= -1;
+      }
+
+      // Check collision with the walls
+      if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+        ball.dy *= -1;
+      }
+
+      // Update the canvas
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      drawRect(player.x, player.y, player.width, player.height, player.color);
+      drawRect(computer.x, computer.y, computer.width, computer.height, computer.color);
+      drawBall(ball.x, ball.y, ball.radius, ball.color);
+      drawNet();
     }
 
-    // Start the game loop
-    draw();
+    // Start the game
+    function game() {
+      update();
+      requestAnimationFrame(game);
+    }
+
+    game();
   </script>
 </body>
 </html>
